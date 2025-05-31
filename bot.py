@@ -20,7 +20,6 @@ from collections import deque
 import resource
 
 # Increase resource limits
-resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
 
 # Set up logging
 logging.basicConfig(
