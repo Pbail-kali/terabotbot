@@ -1,3 +1,4 @@
+
 import os
 import time
 import requests
@@ -18,7 +19,6 @@ from aiohttp import ClientTimeout
 import threading
 from collections import deque
 import resource
-from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Increase resource limits
 import resource
@@ -936,49 +936,48 @@ async def cancel_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await query.answer("Download not found or already started!")
 
-# Health check server
-class HealthHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"OK")
-
-def start_health_server():
-    server = HTTPServer(('0.0.0.0', 8000), HealthHandler)
-    server.serve_forever()
-
-# Start health check server in background
-threading.Thread(target=start_health_server, daemon=True).start()
-
 # Set up telegram bot application
-async def main():
+def main():
+    # Initialize mimetypes
     mimetypes.init()
-    await init_database()
+    
+    # Create application
     app = Application.builder().token(BOT_TOKEN).build()
+    
+    # Add handlers
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("broadcast", broadcast_command))
     app.add_handler(CommandHandler("status", status_command))
     app.add_handler(CommandHandler("astatus", astatus_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(CallbackQueryHandler(cancel_handler, pattern=r"^cancel_\d+$"))
-    logger.info("Bot is running...")
-    await app.run_polling()
-
-if __name__ == "__main__":
-    import sys
-    import asyncio
-
+    
+    # Create a single event loop for all operations
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
     try:
-        if sys.platform == "win32":
-            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # Agar loop already running hai, to task create karo
-            loop.create_task(main())
-        else:
-            loop.run_until_complete(main())
+        # Initialize database
+        loop.run_until_complete(init_database())
+        
+        # Start the bot
+        logger.info("Bot is running...")
+        loop.run_until_complete(app.run_polling())
     except Exception as e:
         logger.critical(f"Bot crashed: {e}")
         if LOG_CHANNEL_ID:
-            pass
+            try:
+                loop.run_until_complete(app.bot.send_message(
+                    chat_id=LOG_CHANNEL_ID,
+                    text=f"🔥 Bot crashed with error:\n```\n{str(e)[:1000]}\n```",
+                    parse_mode="Markdown"
+                ))
+            except Exception as inner_e:
+                logger.error(f"Failed to send crash report: {inner_e}")
         raise
+    finally:
+        # Properly close the event loop
+        loop.close()
+
+if __name__ == "__main__":
+    main()
