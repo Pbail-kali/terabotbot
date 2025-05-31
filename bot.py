@@ -18,6 +18,7 @@ from aiohttp import ClientTimeout
 import threading
 from collections import deque
 import resource
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Increase resource limits
 import resource
@@ -935,48 +936,40 @@ async def cancel_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await query.answer("Download not found or already started!")
 
+# Health check server
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+def start_health_server():
+    server = HTTPServer(('0.0.0.0', 8000), HealthHandler)
+    server.serve_forever()
+
+# Start health check server in background
+threading.Thread(target=start_health_server, daemon=True).start()
+
 # Set up telegram bot application
-def main():
-    # Initialize mimetypes
+async def main():
     mimetypes.init()
-    
-    # Create application
+    await init_database()
     app = Application.builder().token(BOT_TOKEN).build()
-    
-    # Add handlers
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("broadcast", broadcast_command))
     app.add_handler(CommandHandler("status", status_command))
     app.add_handler(CommandHandler("astatus", astatus_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(CallbackQueryHandler(cancel_handler, pattern=r"^cancel_\d+$"))
-    
-    # Create a single event loop for all operations
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    
+    logger.info("Bot is running...")
+    await app.run_polling()
+
+if __name__ == "__main__":
     try:
-        # Initialize database
-        loop.run_until_complete(init_database())
-        
-        # Start the bot
-        logger.info("Bot is running...")
-        loop.run_until_complete(app.run_polling())
+        asyncio.run(main())
     except Exception as e:
         logger.critical(f"Bot crashed: {e}")
         if LOG_CHANNEL_ID:
-            try:
-                loop.run_until_complete(app.bot.send_message(
-                    chat_id=LOG_CHANNEL_ID,
-                    text=f"🔥 Bot crashed with error:\n```\n{str(e)[:1000]}\n```",
-                    parse_mode="Markdown"
-                ))
-            except Exception as inner_e:
-                logger.error(f"Failed to send crash report: {inner_e}")
+            # You can't send Telegram messages here, event loop is closed!
+            pass
         raise
-    finally:
-        # Properly close the event loop
-        loop.close()
-
-if __name__ == "__main__":
-    main()
