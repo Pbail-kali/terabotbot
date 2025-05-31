@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Environment variables
-BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
 CHANNEL_USER = os.getenv("CHANNEL_USER", "MODSMAVI")
 MIRROR_CHANNEL_ID = int(os.getenv("MIRROR_CHANNEL_ID")) if os.getenv("MIRROR_CHANNEL_ID") else None
