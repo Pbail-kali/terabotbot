@@ -965,11 +965,20 @@ async def main():
     await app.run_polling()
 
 if __name__ == "__main__":
+    import sys
+    import asyncio
+
     try:
-        asyncio.run(main())
+        if sys.platform == "win32":
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # Agar loop already running hai, to task create karo
+            loop.create_task(main())
+        else:
+            loop.run_until_complete(main())
     except Exception as e:
         logger.critical(f"Bot crashed: {e}")
         if LOG_CHANNEL_ID:
-            # You can't send Telegram messages here, event loop is closed!
             pass
         raise
