@@ -20,7 +20,12 @@ from collections import deque
 import resource
 
 # Increase resource limits
-resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
+import resource
+try:
+    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    resource.setrlimit(resource.RLIMIT_NOFILE, (min(8192, hard), hard))
+except ValueError as e:
+    print(f"Could not set file descriptor limit: {e}")
 
 # Set up logging
 logging.basicConfig(
