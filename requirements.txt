@@ -1,0 +1,15 @@
+requests==2.32.3
+moviepy==1.0.3
+imageio==2.9.0
+imageio-ffmpeg==0.4.9
+setuptools==69.5.1
+Flask
+pymongo
+nest_asyncio
+python-telegram-bot==20.6
+pyrogram==2.0.106
+motor
+python-dotenv==1.0.0
+aiohttp==3.9.3
+python-magic==0.4.27
+aiofiles
