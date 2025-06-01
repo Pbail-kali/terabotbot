@@ -17,6 +17,9 @@ import aiohttp
 from aiohttp import ClientTimeout
 import threading
 from collections import deque
+import resource
+
+# Increase resource limits
 
 # Set up logging
 logging.basicConfig(
@@ -25,27 +28,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Load environment variables with Heroku support
-def get_env_var(name, default=None):
-    if name in os.environ:
-        return os.environ[name]
-    return os.getenv(name, default)
-
 load_dotenv()
 
 # Environment variables
-BOT_TOKEN = get_env_var("TELEGRAM_TOKEN")
-CHANNEL_ID = int(get_env_var("CHANNEL_ID"))
-CHANNEL_USER = get_env_var("CHANNEL_USER", "MODSMAVI")
-MIRROR_CHANNEL_ID = int(get_env_var("MIRROR_CHANNEL_ID")) if get_env_var("MIRROR_CHANNEL_ID") else None
-LOG_CHANNEL_ID = int(get_env_var("LOG_CHANNEL_ID")) if get_env_var("LOG_CHANNEL_ID") else None
-LINK_CHANNEL_ID = int(get_env_var("LINK_CHANNEL_ID")) if get_env_var("LINK_CHANNEL_ID") else None
-OWNER_ID = int(get_env_var("OWNER_ID"))
-START_IMAGE = get_env_var("START_IMAGE", "https://telegra.ph/file/504babe67ae701cb458f8.jpg")
+BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
+CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
+CHANNEL_USER = os.getenv("CHANNEL_USER", "MODSMAVI")
+MIRROR_CHANNEL_ID = int(os.getenv("MIRROR_CHANNEL_ID")) if os.getenv("MIRROR_CHANNEL_ID") else None
+LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID")) if os.getenv("LOG_CHANNEL_ID") else None
+LINK_CHANNEL_ID = int(os.getenv("LINK_CHANNEL_ID")) if os.getenv("LINK_CHANNEL_ID") else None
+OWNER_ID = int(os.getenv("OWNER_ID"))
+START_IMAGE = os.getenv("START_IMAGE", "https://telegra.ph/file/504babe67ae701cb458f8.jpg")
 RAPIDAPI_HOST = "terabox-downloader-direct-download-link-generator2.p.rapidapi.com"
-API_KEYS = get_env_var("API_KEYS").split(",") if get_env_var("API_KEYS") else []
-MONGO_URI = get_env_var("MONGO_URI")
-UPLOAD_TIMEOUT = int(get_env_var("UPLOAD_TIMEOUT", "1200"))
+API_KEYS = os.getenv("API_KEYS").split(",") if os.getenv("API_KEYS") else []
+MONGO_URI = os.getenv("MONGO_URI")
+UPLOAD_TIMEOUT = int(os.getenv("UPLOAD_TIMEOUT", "1200"))
 
 # MongoDB setup
 mongo_client = None
@@ -933,12 +930,9 @@ async def cancel_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer("Download not found or already started!")
 
 # Set up telegram bot application
-async def main():
+def main():
     # Initialize mimetypes
     mimetypes.init()
-    
-    # Initialize database
-    await init_database()
     
     # Create application
     app = Application.builder().token(BOT_TOKEN).build()
@@ -951,31 +945,32 @@ async def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(CallbackQueryHandler(cancel_handler, pattern=r"^cancel_\d+$"))
     
-    logger.info("Bot is running...")
-    await app.run_polling()
-
-if __name__ == "__main__":
-    # Create a new event loop
+    # Create a single event loop for all operations
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
     try:
-        loop.run_until_complete(main())
+        # Initialize database
+        loop.run_until_complete(init_database())
+        
+        # Start the bot
+        logger.info("Bot is running...")
+        loop.run_until_complete(app.run_polling())
     except Exception as e:
         logger.critical(f"Bot crashed: {e}")
-        if LOG_CHANNEL_ID and BOT_TOKEN:
+        if LOG_CHANNEL_ID:
             try:
-                # Send crash report synchronously
-                url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-                payload = {
-                    "chat_id": LOG_CHANNEL_ID,
-                    "text": f"🔥 Bot crashed with error:\n```\n{str(e)[:4000]}\n```",
-                    "parse_mode": "Markdown"
-                }
-                requests.post(url, json=payload, timeout=10)
+                loop.run_until_complete(app.bot.send_message(
+                    chat_id=LOG_CHANNEL_ID,
+                    text=f"🔥 Bot crashed with error:\n```\n{str(e)[:1000]}\n```",
+                    parse_mode="Markdown"
+                ))
             except Exception as inner_e:
                 logger.error(f"Failed to send crash report: {inner_e}")
         raise
     finally:
-        # Clean up the event loop
+        # Properly close the event loop
         loop.close()
+
+if __name__ == "__main__":
+    main()
