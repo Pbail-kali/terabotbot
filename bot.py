@@ -160,11 +160,11 @@ def get_caption(section: str, user) -> str:
             "🧊 <b>ᴀʙᴏᴜᴛ ᴛᴇʀᴀʙᴏᴛ</b>\n\n"
             "<blockquote>"
             "• ꜰᴀꜱᴛᴇꜱᴛ ᴛᴇʀᴀʙᴏx ᴅɪʀᴇᴄᴛ ᴅᴏᴡɴʟᴏᴀᴅ ʙᴏᴛ\n"
-            "• ʙᴜɪʟᴛ ᴡɪᴛʜ 🎯 ʙʏ <a href='https://t.me/MODSMAVI'>ᴍᴀᴠɪᴍᴏᴅꜱ</a>\n"
+            "• ʙᴜɪʟᴛ ᴡɪᴛʜ 🎯 ʙʏ <a href='https://t.me/Mr_Pbail'>ᴘʙᴀɪʟ</a>\n"
             "• ᴏᴘᴇɴ ꜱᴏᴜʀᴄᴇ, ꜱᴀꜟᴇ, ᴀɴᴅ ᴘʀɪᴠᴀᴄʏ-ꜰʀɪᴇɴᴅʟʏ!\n"
             "• ᴇᴅɪᴛ ʙʏ <a href='https://t.me/INDIAN_HACKER_BOTS'>𝐈𝐍𝐃 𝐁𝐎𝐓𝐒</a>\n"
             "</blockquote>\n"
-            "👨‍💻 <b>ʙᴏᴛ ᴅᴇᴠᴇʟᴏᴘᴇʀ:</b> <a href='https://t.me/Mavimods'>ᴍᴀᴠɪᴍᴏᴅꜱ</a>"
+            "👨‍💻 <b>ʙᴏᴛ ᴅᴇᴠᴇʟᴏᴘᴇʀ:</b> <a href='https://t.me/Mr_Pbail'>ᴘʙᴀɪʟ</a>"
         )
     elif section == "help_again":
         return (
@@ -179,7 +179,7 @@ def get_caption(section: str, user) -> str:
             "• ᴀᴜᴛᴏ ꜰɪʟᴇ/ᴠɪᴅᴇᴏ ᴅᴇʟᴇᴛɪᴏɴ ꜰᴏʀ ʏᴏᴜʀ ꜱᴀꜟᴇᴛʏ\n"
             "• ᴍɪʀʀᴏʀ ᴛᴏ ᴄʜᴀɴɴᴇʟ (ɪꜰ ᴇɴᴀʙʟᴇᴅ)\n"
             "<blockquote>"
-            "👨‍💻 <b>ʙᴏᴛ ᴅᴇᴠᴇʟᴏᴘᴇʀ:</b> <a href='https://t.me/Mavimods'>ᴍᴀᴠɪᴍᴏᴅꜱ</a>"
+            "👨‍💻 <b>ʙᴏᴛ ᴅᴇᴠᴇʟᴏᴘᴇʀ:</b> <a href='https://t.me/Mr_Pbail'>ᴘʙᴀɪʟ</a>"
             "</blockquote>"
         )
     else:  
